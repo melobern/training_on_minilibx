@@ -78,12 +78,32 @@ int	main(void)
 	t_data	img;
 
 	mlx = mlx_init();
-	img.img = mlx_new_image(mlx, 600, 600);
+    if (mlx == NULL)
+        return (1);
+    img.img = mlx_new_image(mlx, 600, 600);
+    if (img.img == NULL)
+    {
+        mlx_destroy_display(mlx);
+        free(mlx);
+        return (1);
+    }
 	img.addr = mlx_get_data_addr(img.img, &img.bits_per_pixel, &img.line_length,
 			&img.endian);
 	mlx_window = mlx_new_window(mlx, 600, 600, "My First Rainbow");
+    if (mlx_window == NULL)
+    {
+        mlx_destroy_image(mlx, &img);
+        mlx_destroy_display(mlx);
+        free(mlx);
+        return (1);
+    }
 	rainbow(&img);
 	mlx_put_image_to_window(mlx, mlx_window, img.img, 0, 0);
 	mlx_loop(mlx);
+
+    mlx_destroy_image(mlx, &img);
+    mlx_destroy_window(mlx, mlx_window);
+    mlx_destroy_display(mlx);
+    free(mlx);
 	return (0);
 }
