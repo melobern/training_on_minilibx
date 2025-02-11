@@ -38,6 +38,10 @@ void broadcast(int sender) {
 	}
 }
 
+// void server_loop(int sockfd) {
+	
+// }
+
 int main(int ac, char **av) {
 	if (ac != 2)
 		fatal_error(1);
@@ -54,7 +58,7 @@ int main(int ac, char **av) {
 
 	servaddr.sin_family = AF_INET; 
 	servaddr.sin_addr.s_addr = htonl(2130706433); //127.0.0.1
-	servaddr.sin_port = htons(atoi(av[1])); 
+	servaddr.sin_port = htons(atoi(av[1]));
 
 	if ((bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr))) != 0)
 		fatal_error(2);
@@ -63,7 +67,7 @@ int main(int ac, char **av) {
 
 	while(1) {
 		rfds = wfds = afds;
-		if (select(maxfd + 1, &rfds, &wfds, 0, 0) == -1)
+		if (select(maxfd + 1, &rfds, NULL, NULL, NULL) == -1)
 			continue;
 		for (int fd  = 0; fd <= maxfd; fd++) {
 			if (FD_ISSET(fd, &rfds)) {
@@ -86,7 +90,8 @@ int main(int ac, char **av) {
 						close(fd);
 						bzero(clients[fd].msg, strlen(clients[fd].msg));
 					} else {
-						for (int i = 0, j = strlen(clients[fd].msg); i < ret; i++, j++) {
+						size_t msgLen = strlen(clients[fd].msg);
+						for (int i = 0, j = msgLen; i < ret; i++, j++) {
 							clients[fd].msg[j] = rbuf[i];
 							if (clients[fd].msg[j] == '\n') {
 								clients[fd].msg[j] = 0;
@@ -157,4 +162,47 @@ Ce code est un programme en C qui implémente un serveur TCP simple capable de g
 
 Le serveur accepte les connexions des clients, lit les messages qu'ils envoient, et les diffuse à tous les autres clients connectés. Lorsqu'un client se déconnecte, un message est également diffusé.
 
-Ce code est un bon exemple de gestion de serveur multi-clients en C en utilisant des sockets et la fonction `select` pour gérer les entrées/sorties de manière non bloquante.*/
+Ce code est un bon exemple de gestion de serveur multi-clients en C en utilisant des sockets et la fonction `select` pour gérer les entrées/sorties de manière non bloquante.
+
+Assignment name  : mini_serv
+Expected files   : mini_serv.c
+Allowed functions: write, close, select, socket, accept, listen, send, recv, bind, strstr, malloc, realloc, free, calloc, bzero, atoi, sprintf, strlen, exit, strcpy, strcat, memset
+--------------------------------------------------------------------------------
+
+Ecrivez un programme qui écoutera les clients se connecter sur un certain port sur 127.0.0.1 et qui permettra aux clients de parler entre eux.
+
+Ce programme prendra comme premier argument le port auquel se connecter.
+Si aucun argument n'est donné, il devrait écrire dans stderr "Wrong number of arguments" suivi d'un \n et sortir avec le statut 1.
+Si un appel système renvoie une erreur avant que le programme ne commence à accepter la connexion, il doit écrire dans stderr "Fatal error" suivi d'un \n et sortir avec le statut 1.
+Si vous ne pouvez pas allouer de la mémoire, il doit écrire dans stderr "Fatal error" suivi d'un \n et sortir avec le statut 1.
+
+- Votre programme doit être non bloquant mais le client peut être paresseux et s'il ne lit pas votre message vous ne devez PAS le déconnecter.
+- Votre programme ne doit pas contenir #define preproc.
+- Votre programme ne doit écouter que 127.0.0.1.
+- Le fd que vous recevrez sera déjà configuré pour que 'recv' ou 'send' bloque si select n'a pas été appelé avant de les appeler, mais ne bloquera pas sinon. 
+
+Quand un client se connecte au serveur :
+- le client recevra un id. le premier client recevra l'id 0 et chaque nouveau client recevra l'id du dernier client + 1.
+- %d sera remplacé par ce nombre.
+- un message est envoyé à tous les clients qui se sont connectés au serveur : "serveur : le client %d vient d'arriver".
+
+Les clients doivent être capables d'envoyer des messages à votre programme :
+- le message ne sera composé que de caractères imprimables, pas besoin de vérifier.
+- un message unique se termine toujours par un \n.
+- lorsque le serveur reçoit un message, il doit le renvoyer à tous les autres clients avec "client %d : " devant le message.
+
+Lorsqu'un client se déconnecte du serveur, un message est envoyé à tous les clients qui étaient connectés au serveur : "server : client %d just left\n".
+
+Les fuites de mémoire ou de fd sont interdites
+
+Pour vous aider, vous trouverez le fichier main.c avec le début d'un serveur et peut-être quelques fonctions utiles.
+(Attention, dans ce fichier, il est interdit d'utiliser des fonctions interdites ou d'écrire des choses qui ne doivent pas être là dans votre programme final).
+
+Vous avez également un exécutable nc dans le dossier subject qui se connecte uniquement à localhost afin de tester votre serveur.
+
+Attention notre testeur s'attend à ce que vous envoyiez les messages aussi vite que possible. Ne faites pas de tampon inutile.
+
+Hint : vous pouvez utiliser nc pour tester votre programme
+Hint : vous devriez utiliser nc pour tester votre programme
+Hint : Pour tester vous pouvez utiliser fcntl(fd, F_SETFL, O_NONBLOCK) mais utilisez select et ne vérifiez JAMAIS EAGAIN (man 2 send)
+*/
